@@ -22,7 +22,7 @@ Apenas URL do projeto e chave anon/public podem ir para `VITE_*`. **Nunca** colo
 
 ## 2. Configurar banco e usuário administrador
 1. Crie um projeto em https://supabase.com.
-2. Abra SQL Editor e execute, **nesta ordem**, `supabase/migrations/202610140001_initial_schema.sql` e depois `supabase/migrations/202610140002_security_hardening.sql`.
+2. Abra SQL Editor e execute, **nesta ordem**, `supabase/migrations/202610140001_initial_schema.sql`, `supabase/migrations/202610140002_security_hardening.sql` `supabase/migrations/202610140003_sales_scope.sql`, `supabase/migrations/202610150001_sync_profile_email.sql` e `supabase/migrations/202610150002_staff_vehicle_columns.sql`.
 3. Em Authentication, crie um usuário com e-mail e senha fortes.
 4. Copie o UUID desse usuário em Authentication > Users.
 5. No SQL Editor, execute (substitua UUID e nome):
@@ -35,7 +35,15 @@ values ('UUID-DO-USUARIO', 'Administrador', 'admin', true);
 
 Atenção: o primeiro usuário administrativo deve ser criado por uma pessoa autorizada. Não exponha a service role key ao navegador.
 
-## 3. Publicar frontend
+## 3. Publicar GRÁTIS (recomendado: Cloudflare Pages + Supabase Free)
+1. Crie conta grátis no GitHub e suba esta pasta em um repositório (privado).
+2. Crie conta grátis em https://dash.cloudflare.com > Workers & Pages > Create > Pages > Connect to Git.
+3. Build command: `npm run build` | Output directory: `dist` | variável `NODE_VERSION` = `20`.
+4. Em Environment variables, cadastre `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_WHATSAPP_NUMBER`, `VITE_STORE_NAME` e faça o deploy.
+5. Copie a URL gerada (ex.: https://sualoja.pages.dev) e use-a em `ALLOWED_ORIGIN` nos secrets do Supabase (seção 4).
+Os arquivos `public/_redirects` e `public/_headers` já configuram rotas e cabeçalhos de segurança. Vercel e Netlify (planos grátis) também funcionam.
+
+## 3b. Outras opções de frontend
 ### Vercel
 1. Envie o projeto para um repositório Git privado.
 2. Importe o repositório em https://vercel.com.
@@ -72,7 +80,8 @@ Use a versão Graph API suportada atualmente no painel Meta, caso seja diferente
 - Modo de demonstração sem backend configurado.
 - Integração REST com Supabase para veículos e leads.
 - Login de equipe via Supabase Auth.
-- Painel inicial com visão geral, alteração de estado do estoque e funil de leads.
+- Painel com visão geral, gestão de estoque para administradores, CRM com etapas, atribuição de leads e data do próximo contato.
+- Área de vendedores com contagem de carteira e contatos atrasados. A migração 003 restringe leads por responsável e impede que vendedores alterem o estoque.
 - Formulário de interesse com confirmação de autorização de contato.
 - Schema SQL para veículos, clientes, leads, conversas, mensagens, tarefas, propostas, execuções de agentes e auditoria.
 - Webhook WhatsApp com deduplicação básica de mensagens e registro de conversas.
@@ -82,7 +91,7 @@ Use a versão Graph API suportada atualmente no painel Meta, caso seja diferente
 ## 7. Limitações que devem ser resolvidas antes de operação comercial
 - As credenciais e contas externas precisam ser configuradas por você.
 - O webhook cobre mensagens de texto; mídia, áudio, botões, status de entrega/leitura e templates precisam de implementação adicional conforme o fluxo desejado.
-- O painel atual é uma primeira versão funcional; não inclui ainda edição completa de veículo, upload de fotos, caixa de entrada de mensagens, propostas, agenda ou gestão de margem.
+- O painel atual não inclui ainda edição completa de veículo, upload de fotos, caixa de entrada de mensagens, propostas, agenda ou gestão de margem. O teste de IA exige a Edge Function publicada e secrets configurados.
 - O agente de IA é um atendente inicial, não um agente irrestrito de administração do negócio. Alterações de preço, reservas definitivas, descontos e decisões financeiras precisam de regras explícitas, autorização e auditoria.
 - Configure um aviso de privacidade verdadeiro, processo para solicitações de titulares, retenção mínima e controle de acesso aos dados pessoais conforme LGPD.
 - Adicione testes automatizados, alertas, backups e um procedimento humano de contingência antes de receber clientes reais.
@@ -92,3 +101,8 @@ Use a versão Graph API suportada atualmente no painel Meta, caso seja diferente
 - `npm run build`: build de produção
 - `npm run preview`: visualizar build localmente
 - `npm run lint`: análise estática
+
+
+### Teste seguro do agente de IA
+
+A aba **Agente IA** envia `dryRun: true` e apenas simula a resposta. Esse modo não dispara WhatsApp, não grava mensagem de saída e não altera etapa nem data de contato do lead. Para atendimento real, a função deve ser chamada sem `dryRun: true`, a partir de um fluxo autorizado. Publique novamente a Edge Function após atualizar os arquivos.
