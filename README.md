@@ -22,7 +22,7 @@ Apenas URL do projeto e chave anon/public podem ir para `VITE_*`. **Nunca** colo
 
 ## 2. Configurar banco e usuário administrador
 1. Crie um projeto em https://supabase.com.
-2. Abra SQL Editor e execute `supabase/migrations/202610140001_initial_schema.sql`.
+2. Abra SQL Editor e execute, **nesta ordem**, `supabase/migrations/202610140001_initial_schema.sql` e depois `supabase/migrations/202610140002_security_hardening.sql`.
 3. Em Authentication, crie um usuário com e-mail e senha fortes.
 4. Copie o UUID desse usuário em Authentication > Users.
 5. No SQL Editor, execute (substitua UUID e nome):
@@ -50,8 +50,8 @@ Instale a CLI do Supabase, faça login e vincule o projeto:
 ```bash
 npx supabase login
 npx supabase link --project-ref SEU_PROJECT_REF
-npx supabase secrets set SUPABASE_SERVICE_ROLE_KEY='SUA_SERVICE_ROLE_KEY' OPENAI_API_KEY='SUA_CHAVE_IA' OPENAI_MODEL='gpt-4o-mini' WHATSAPP_ACCESS_TOKEN='TOKEN_META' WHATSAPP_PHONE_NUMBER_ID='ID_NUMERO_META' WHATSAPP_VERIFY_TOKEN='TOKEN_VERIFICACAO_FORTE' META_APP_SECRET='SEGREDO_APP_META' META_GRAPH_VERSION='v23.0' REQUIRE_META_SIGNATURE='true'
-npx supabase functions deploy whatsapp-webhook --no-verify-jwt
+npx supabase secrets set SUPABASE_SERVICE_ROLE_KEY='SUA_SERVICE_ROLE_KEY' OPENAI_API_KEY='SUA_CHAVE_IA' OPENAI_MODEL='gpt-4o-mini' WHATSAPP_ACCESS_TOKEN='TOKEN_META' WHATSAPP_PHONE_NUMBER_ID='ID_NUMERO_META' WHATSAPP_VERIFY_TOKEN='TOKEN_VERIFICACAO_FORTE' META_APP_SECRET='SEGREDO_APP_META' META_GRAPH_VERSION='v23.0' ALLOWED_ORIGIN='https://www.sualoja.com.br'
+npx supabase functions deploy whatsapp-webhook
 npx supabase functions deploy ai-sales-agent
 npx supabase functions deploy whatsapp-send
 ```
@@ -64,6 +64,8 @@ Use a versão Graph API suportada atualmente no painel Meta, caso seja diferente
 3. Verifique a assinatura do aplicativo e assine o campo `messages` do webhook do WhatsApp.
 4. Use um número de teste e valide mensagens de entrada e saída antes de liberar o número comercial.
 5. A Meta exige regras de consentimento, janela de atendimento e templates aprovados para mensagens iniciadas pela empresa. Revise as políticas vigentes antes de ativar automações.
+
+> `META_APP_SECRET` agora é **obrigatório**: sem ele o webhook recusa todas as chamadas. As funções `ai-sales-agent` e `whatsapp-send` só aceitam a service role key ou um usuário ativo da equipe. Veja `docs/SEGURANCA.md`.
 
 ## 6. O que já está incluído
 - Vitrine responsiva com busca, filtro por marca e cartões de veículos.
